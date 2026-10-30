@@ -1,8 +1,8 @@
 #signup-page{
-    display: none;
+    display:block;
     text-align: center;
 }
 #login-page{
-    display:none;
+    display:block;
     text-align: center;
 }
