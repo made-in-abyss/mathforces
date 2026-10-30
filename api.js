@@ -58,13 +58,13 @@ async function getLeaderboard() {
     return data || [];
 }
 
-async function signUp(email,password,chosenUsername) {
+async function signUp(email,password) {
     let {data, error} = await db.auth.signUp({
         email:email,
         password:password,
         options: {
             data: {
-                username: chosenUsername
+                username: email
             }
         }
     });
