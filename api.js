@@ -87,4 +87,9 @@ async function logIn(email, password) {
     alert("Logged in successfully");
     return data.user;
 }
+async function checkStatus() {
+    let {data: {user}} = await db.auth.getUser();
+    if (!user) return false;
+    return true;
+}
 //=======================API==================================================
