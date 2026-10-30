@@ -1,0 +1,2 @@
+# mathforces
+Codeforces copycat
