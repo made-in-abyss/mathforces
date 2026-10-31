@@ -1,8 +1,15 @@
 #signup-page{
-    display:block;
+    display:none;
     text-align: center;
 }
 #login-page{
-    display:block;
+    display:none;
     text-align: center;
+}
+#main-page{
+    display:none;
+}
+#webtitle{
+    text-align: center;
+    text-shadow: 10px;
 }
