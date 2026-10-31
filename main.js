@@ -3,6 +3,7 @@ let login_mail = document.getElementById("login-mail");
 let login_password = document.getElementById("login-password");
 let login_confirm = document.getElementById("login-confirm");
 let signup_transition = document.getElementById("signup-transition");
+let logout_confirm = document.getElementById("logout-confirm");
 //======
 let signup_mail = document.getElementById("signup-mail");
 let signup_password = document.getElementById("signup-password");
@@ -52,13 +53,13 @@ function reload(){
     init();
 }
 async function submit() {
-    answer_field.value = "";
     if (currentID == -1){
         alert("empty submission");
         return;
     }
     let username = await getUsername();
     let answer = document.getElementById("answer-field").value;
+    answer_field.value = "";
     if (username == null || answer == null) return;
     answer = answer.toLowerCase().replace(/\s+/g, '');
     let data = await submitProblem(username,currentID,answer);
@@ -85,19 +86,29 @@ async function viewProblem(id){
     currentID = id;
 }
 
+let tabSwitch_debounce = false;
 async function loadProblems(divName) {
+    tabSwitch_debounce = true;
     problems_box.innerHTML = "";
     let problem_list = await loadProblemsByLevel(divName);
+    let username = await getUsername();
+    let solvedIds = await getSolvedProblemIds(username); 
+
+
     for (let problem of problem_list){
+        let isSolved = solvedIds.includes(problem.id);
+        let cardColor = isSolved?"#00ff88":"#3b3838";
+        let statusBadge = isSolved?"SOLVED":"UNSOLVED";
         problems_box.innerHTML += `
-            <div class="problem-card">
-                <h5>#${problem.id}:${problem.name}</h5>
+            <div class="problem-card" style="border: 2px solid ${cardColor};">
+                 <h5 style="color: ${cardColor};">#${problem.id}: ${problem.name} [${statusBadge}]</h5>
                 <p>${problem.base_points}PTS</p>
                 <button onclick="viewProblem(${problem.id})">VIEW</button>
             </div>
             <br>
         `;
     }
+    tabSwitch_debounce = false;
 }
 
 async function OnPress(something) {
@@ -132,6 +143,7 @@ login_confirm.addEventListener("click",function(){
     let mail = login_mail.value;
     let pass = login_password.value;
     logIn(mail,pass);
+    reload();
 });
 
 signup_confirm.addEventListener("click",function(){
@@ -140,7 +152,17 @@ signup_confirm.addEventListener("click",function(){
     if (mail.length >= 40 || pass.length>=20 || pass.length<=7)alert("either password or mail is either too long or too short.");
     else{
         signUp(mail,pass);
+        reload();
     }
+});
+
+async function logout2(){
+    return await logOut();
+}
+
+logout_confirm.addEventListener("click",function(){
+    let ok = logout2();
+    reload();
 });
 
 submit_btn.addEventListener("click",function(){
@@ -148,9 +170,11 @@ submit_btn.addEventListener("click",function(){
 });
 
 reload();
-
-
-
 for (let i of division_btns){
-    i.addEventListener("click",function(){OnPress(i);});
+    i.addEventListener("click",function(){
+        if (tabSwitch_debounce == true) return;
+        tabSwitch_debounce = true;
+        OnPress(i);
+
+    });
 }

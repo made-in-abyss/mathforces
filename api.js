@@ -59,6 +59,7 @@ async function getLeaderboard() {
 }
 
 async function signUp(email,password) {
+    alert("Check your mail.");
     let {data, error} = await db.auth.signUp({
         email:email,
         password:password,
@@ -84,7 +85,7 @@ async function logIn(email, password) {
         alert("failed: "+error.message);
         return null;
     }
-    alert("Logged in successfully");
+    alert("Logged in successfully, please refresh the page.");
     return data.user;
 }
 async function checkStatus() {
@@ -109,5 +110,22 @@ async function getProblemById(problemId) {
     }
     return data;
 }
+async function getSolvedProblemIds(username) {
+    let {data,error} =await db
+        .from('submissions')
+        .select('problem_id')
+        .eq('username',username)
+        .eq('is_correct',true);
+    if (error||!data) return [];
+    return data.map(item => item.problem_id);
+}
 
+async function logOut() {
+    let {error} = await db.auth.signOut();
+    if (error) {
+        alert("failed: "+error.message);
+        return false;
+    }
+    return true;
+}
 //=======================API==================================================
