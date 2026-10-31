@@ -9,10 +9,17 @@ let signup_mail = document.getElementById("signup-mail");
 let signup_password = document.getElementById("signup-password");
 let signup_confirm = document.getElementById("signup-confirm");
 let login_transition = document.getElementById("login-transition");
+//======
 let answer_field = document.getElementById("answer-field");
 let problems_box = document.getElementById("problems-box");
 let description_tab = document.getElementById("description-tab");
 let submit_btn = document.getElementById("submit-btn");
+//======
+let viewprofile_btn = document.getElementById("viewprofile-btn");
+let back_btn = document.getElementById("back-btn");
+let username_field = document.getElementById("username-field");
+let rating_field = document.getElementById("rating-field");
+let solved_problems_box = document.getElementById("solved-problems-box");
 //======
 let is_mainpage = false;
 let currentID = -1;
@@ -21,6 +28,7 @@ let pages = {
     login_page: document.getElementById("login-page"),
     signup_page:  document.getElementById("signup-page"),
     main_page: document.getElementById("main-page"),
+    profile_page:  document.getElementById("profile-page"),
 }
 let division_btns = [
     document.getElementById("div4-btn"),
@@ -53,15 +61,22 @@ function reload(){
     init();
 }
 async function submit() {
-    if (currentID == -1){
+    if (currentID == -1 || is_mainpage == false){
         alert("empty submission");
         return;
     }
     let username = await getUsername();
     let answer = document.getElementById("answer-field").value;
     answer_field.value = "";
-    if (username == null || answer == null) return;
+    if (username == null || answer == null || answer.length == 0 ){
+        alert("empty submission.");
+        return;
+    }
     answer = answer.toLowerCase().replace(/\s+/g, '');
+    if (answer.length >=200){
+        alert("submission is too long.");
+        return;
+    }
     let data = await submitProblem(username,currentID,answer);
     if (data!=null){
         if (data.is_correct == true){
@@ -72,8 +87,8 @@ async function submit() {
         }
     }
 }
-
 async function viewProblem(id){
+    profileSwitch_debounce = true
     let p = await getProblemById(id);
     description_tab.style.display = "block";
     problems_box.style.display = "none";
@@ -97,7 +112,7 @@ async function loadProblems(divName) {
 
     for (let problem of problem_list){
         let isSolved = solvedIds.includes(problem.id);
-        let cardColor = isSolved?"#00ff88":"#3b3838";
+        let cardColor = isSolved?"#00aa5b":"#d8f0f8";
         let statusBadge = isSolved?"SOLVED":"UNSOLVED";
         problems_box.innerHTML += `
             <div class="problem-card" style="border: 2px solid ${cardColor};">
@@ -118,7 +133,7 @@ async function OnPress(something) {
     description_tab.style.display = "none";
     problems_box.style.display = "block";
     let divName = something.textContent;
-    something.style.color = "rgb(0, 191, 255)";
+    something.style.color = "rgb(0, 85, 255)";
     reload();
     loadProblems(divName);
 }
@@ -159,6 +174,31 @@ signup_confirm.addEventListener("click",function(){
 async function logout2(){
     return await logOut();
 }
+ let profileSwitch_debounce = false;
+async function profileView() {
+    let username = await getUsername();
+    if (username == null) return false;
+    let userData = await getPlayerStats(username);
+    if (userData == null) return false;
+    profileSwitch_debounce = true;
+    username_field.value =  userData.name;
+    rating_field.value = userData.points;
+    let solvedIds = await getSolvedProblemIds(username);
+    solved_problems_box.innerHTML = "";
+    for (let id of solvedIds){
+        let problem = await getProblemById(id);
+        let cardColor = "#00aa5b";
+        let statusBadge = "SOLVED";
+        solved_problems_box.innerHTML += `
+            <div class="problem-card" style="border: 2px solid ${cardColor};">
+                 <h5 style="color: ${cardColor};">#${problem.id}: ${problem.name} [${statusBadge}]</h5>
+                <p>${problem.base_points}PTS</p>
+            </div>
+            <br>
+        `;
+    }
+    profileSwitch_debounce = false;
+}
 
 logout_confirm.addEventListener("click",function(){
     let ok = logout2();
@@ -169,12 +209,32 @@ submit_btn.addEventListener("click",function(){
     submit();
 });
 
+viewprofile_btn.addEventListener("click",function(){
+    if (profileSwitch_debounce ==true) return;
+    for (let d of Object.values(pages)) {
+        d.style.display ="none";
+    }
+    pages.profile_page.style.display ="block";
+    is_mainpage = false;
+    profileView();
+});
+
+back_btn.addEventListener("click",function(){
+    if (profileSwitch_debounce ==true) return;
+    profileSwitch_debounce = true;
+    for (let d of Object.values(pages)) {
+        d.style.display ="none";
+    }
+    pages.main_page.style.display ="block";
+    is_mainpage = true;
+    profileSwitch_debounce = false;
+});
+
 reload();
 for (let i of division_btns){
     i.addEventListener("click",function(){
         if (tabSwitch_debounce == true) return;
         tabSwitch_debounce = true;
         OnPress(i);
-
     });
 }

@@ -42,6 +42,7 @@ async function getPlayerStats(username) {
         accuracy = ((player.first_try_solves/player.total_solved)*100).toFixed(1);
     }
     return {
+        name : username,
         points: player?.total_points || 0,
         solvedCount: player?.total_solved || 0,
         totalTries: player?.total_tries || 0,
