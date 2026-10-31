@@ -90,7 +90,7 @@ async function submit() {
             alert("you've earned "+ data.points_earned+" rating.");
         }
         else{
-            alert("incorrect answer.");
+            alert(data.message || "incorrect answer.");
         }
     }
 }
