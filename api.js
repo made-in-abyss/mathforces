@@ -82,7 +82,7 @@ async function signUp(email,password) {
         alert("failed: "+error.message);
         return null;
     }
-    alert("Mathforces welcomes you, " + chosenUsername);
+    alert("Mathforces welcomes you, " + email);
     return data.user;
 }
 async function logIn(email, password) {
@@ -94,7 +94,6 @@ async function logIn(email, password) {
         alert("failed: "+error.message);
         return null;
     }
-    alert("Logged in successfully, please refresh the page.");
     return data.user;
 }
 async function checkStatus() {

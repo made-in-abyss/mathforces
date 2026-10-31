@@ -107,7 +107,6 @@ async function viewProblem(id){
 
 let tabSwitch_debounce = false;
 async function loadProblems(divName) {
-    tabSwitch_debounce = true;
     problems_box.innerHTML = "";
     let problem_list = problem_cache[divName];
     let username = await getUsername();
@@ -125,7 +124,6 @@ async function loadProblems(divName) {
             <br>
         `;
     }
-    tabSwitch_debounce = false;
 }
 
 async function OnPress(something) {
@@ -136,7 +134,7 @@ async function OnPress(something) {
     problems_box.style.display = "block";
     let divName = something.textContent;
     something.style.color = "rgb(0, 85, 255)";
-    loadProblems(divName);
+    await loadProblems(divName);
 }
 
 
@@ -155,33 +153,28 @@ signup_transition.addEventListener("click",function(){
     pages.signup_page.style.display ="block";
 });
 
-login_confirm.addEventListener("click",function(){
+login_confirm.addEventListener("click",async function(){
     let mail = login_mail.value;
     let pass = login_password.value;
-    logIn(mail,pass);
+    await logIn(mail,pass);
     reload();
 });
 
-signup_confirm.addEventListener("click",function(){
+signup_confirm.addEventListener("click",async function(){
     let mail = signup_mail.value;
     let pass = signup_password.value;
     if (mail.length >= 40 || pass.length>=20 || pass.length<=7)alert("either password or mail is either too long or too short.");
     else{
-        signUp(mail,pass);
+        await signUp(mail,pass);
         reload();
     }
 });
-
-async function logout2(){
-    return await logOut();
-}
  let profileSwitch_debounce = false;
 async function profileView() {
     let username = await getUsername();
     if (username == null) return false;
     let userData = await getPlayerStats(username);
     if (userData == null) return false;
-    profileSwitch_debounce = true;
     username_field.value =  userData.name;
     rating_field.value = userData.points;
     let solvedIds = await getSolvedProblemIds(username);
@@ -198,11 +191,10 @@ async function profileView() {
             <br>
         `;
     }
-    profileSwitch_debounce = false;
 }
 
-logout_confirm.addEventListener("click",function(){
-    let ok = logout2();
+logout_confirm.addEventListener("click",async function(){
+    await logOut();
     reload();
 });
 
@@ -210,14 +202,16 @@ submit_btn.addEventListener("click",function(){
     submit();
 });
 
-viewprofile_btn.addEventListener("click",function(){
+viewprofile_btn.addEventListener("click",async function(){
     if (profileSwitch_debounce ==true) return;
+    profileSwitch_debounce = true;
     for (let d of Object.values(pages)) {
         d.style.display ="none";
     }
     pages.profile_page.style.display ="block";
     is_mainpage = false;
-    profileView();
+    await profileView();
+    profileSwitch_debounce = false;
 });
 
 back_btn.addEventListener("click",function(){
@@ -234,10 +228,11 @@ back_btn.addEventListener("click",function(){
 reload();
 //========
 for (let i of division_btns){
-    i.addEventListener("click",function(){
+    i.addEventListener("click",async function(){
         if (tabSwitch_debounce == true) return;
         tabSwitch_debounce = true;
-        OnPress(i);
+        await OnPress(i);
+        tabSwitch_debounce = false;
     });
 }
 tabSwitch_debounce = true;
