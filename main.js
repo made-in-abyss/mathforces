@@ -8,9 +8,13 @@ let signup_mail = document.getElementById("signup-mail");
 let signup_password = document.getElementById("signup-password");
 let signup_confirm = document.getElementById("signup-confirm");
 let login_transition = document.getElementById("login-transition");
+let answer_field = document.getElementById("answer-field");
+let problems_box = document.getElementById("problems-box");
+let description_tab = document.getElementById("description-tab");
+let submit_btn = document.getElementById("submit-btn");
 //======
 let is_mainpage = false;
-
+let currentID = -1;
 //======
 let pages = {
     login_page: document.getElementById("login-page"),
@@ -25,24 +29,6 @@ let division_btns = [
     document.getElementById("div0-btn"),
 ]
 //======
-async function loadProblems(divName) {
-    let box = document.getElementById("problems-box");
-    box.innerHTML = "";
-    let problem_list = await loadProblemsByLevel(divName);
-    for (let problem of problem_list){
-        box.innerHTML += `
-            <div class="problem-card">
-                <h4>#${problem.id}: ${problem.name}</h4>
-                <p>⭐ ${problem.base_points} PTS</p>
-                <button onclick="viewProblem(${problem.id})">VIEW</button>
-            </div>
-        `;
-    }
-}
-async function OnPress(divName) {
-    
-}
-
 async function init() {
     let loggedIn=await checkStatus();
     if (loggedIn == false) {
@@ -60,6 +46,72 @@ async function init() {
         is_mainpage = true;
     }
 }
+
+function reload(){
+    answer_field.value = "";
+    init();
+}
+async function submit() {
+    answer_field.value = "";
+    if (currentID == -1){
+        alert("empty submission");
+        return;
+    }
+    let username = await getUsername();
+    let answer = document.getElementById("answer-field").value;
+    if (username == null || answer == null) return;
+    answer = answer.toLowerCase().replace(/\s+/g, '');
+    let data = await submitProblem(username,currentID,answer);
+    if (data!=null){
+        if (data.is_correct == true){
+            alert("you've earned "+ data.points_earned+" rating.");
+        }
+        else{
+            alert("incorrect answer.");
+        }
+    }
+}
+
+async function viewProblem(id){
+    let p = await getProblemById(id);
+    description_tab.style.display = "block";
+    problems_box.style.display = "none";
+    
+    let description_box = document.getElementById("description-box");
+    let problem_title = document.getElementById("problem-title");
+    problem_title.value = p.id + " : " + p.name;
+    description_box.textContent = p.description;
+
+    currentID = id;
+}
+
+async function loadProblems(divName) {
+    problems_box.innerHTML = "";
+    let problem_list = await loadProblemsByLevel(divName);
+    for (let problem of problem_list){
+        problems_box.innerHTML += `
+            <div class="problem-card">
+                <h5>#${problem.id}:${problem.name}</h5>
+                <p>${problem.base_points}PTS</p>
+                <button onclick="viewProblem(${problem.id})">VIEW</button>
+            </div>
+            <br>
+        `;
+    }
+}
+
+async function OnPress(something) {
+    for (let i of division_btns){
+        i.style.color= "rgb(0, 0, 0)";
+    }
+    description_tab.style.display = "none";
+    problems_box.style.display = "block";
+    let divName = something.textContent;
+    something.style.color = "rgb(0, 191, 255)";
+    reload();
+    loadProblems(divName);
+}
+
 
 //=======
 login_transition.addEventListener("click",function(){
@@ -91,14 +143,14 @@ signup_confirm.addEventListener("click",function(){
     }
 });
 
-function reload(){
-    init();
-}
+submit_btn.addEventListener("click",function(){
+    submit();
+});
 
 reload();
 
 
 
 for (let i of division_btns){
-    i.addEventListener("click",function(){OnPress(i.textContent);});
+    i.addEventListener("click",function(){OnPress(i);});
 }

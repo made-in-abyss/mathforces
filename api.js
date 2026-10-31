@@ -6,7 +6,7 @@ async function loadProblemsByLevel(levelName) {
     let { data, error } =await db
         .from('problems')
         .select('id, name, description, base_points')
-        .eq('level', levelName);
+        .eq("division",levelName);
     if (error) {
         return [];
     }
@@ -92,4 +92,22 @@ async function checkStatus() {
     if (!user) return false;
     return true;
 }
+async function getUsername() {
+    let { data: { user } } = await db.auth.getUser();
+    if (!user) return null;
+    return user.email;
+}
+async function getProblemById(problemId) {
+    let { data, error } = await db
+        .from('problems')
+        .select('id, name, description, base_points, division')
+        .eq('id', problemId)
+        .single();
+    if (error) {
+        console.error("error:",error);
+        return null;
+    }
+    return data;
+}
+
 //=======================API==================================================
