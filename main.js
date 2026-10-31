@@ -95,7 +95,6 @@ async function submit() {
     }
 }
 async function viewProblem(id){
-    profileSwitch_debounce = true
     let p = await getProblemById(id);
     description_tab.style.display = "block";
     problems_box.style.display = "none";
@@ -103,7 +102,6 @@ async function viewProblem(id){
     let problem_title = document.getElementById("problem-title");
     problem_title.value = p.id + " : " + p.name;
     description_box.textContent = p.description;
-
     currentID = id;
 }
 
