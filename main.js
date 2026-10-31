@@ -138,7 +138,6 @@ async function OnPress(something) {
     problems_box.style.display = "block";
     let divName = something.textContent;
     something.style.color = "rgb(0, 85, 255)";
-    reload();
     loadProblems(divName);
 }
 
