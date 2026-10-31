@@ -25,7 +25,6 @@ async function submitProblem(username,problemId,userAnswer) {
     //{success: true,is_correct:true,points_earned: 10,message: "..."}
     return data;
 }
-
 async function getPlayerStats(username) {
     let {data: player} = await db
         .from('players')
@@ -57,6 +56,15 @@ async function getLeaderboard() {
         .order('total_points', {ascending:false })
         .limit(10);
     return data || [];
+}
+async function getProblemsByIds(idsArray) {
+    if (!idsArray || idsArray.length === 0)return [];
+    let {data,error} = await db
+        .from('problems')
+        .select('id, name, base_points')
+        .in('id',idsArray);
+    if (error) return [];
+    return data;
 }
 
 async function signUp(email,password) {

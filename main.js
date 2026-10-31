@@ -30,6 +30,13 @@ let pages = {
     main_page: document.getElementById("main-page"),
     profile_page:  document.getElementById("profile-page"),
 }
+let problem_cache = {
+    ["Division 4"]:[],
+    ["Division 3"]:[],
+    ["Division 2"]:[],
+    ["Division 1"]:[],
+    ["Division 0"]:[],
+}
 let division_btns = [
     document.getElementById("div4-btn"),
     document.getElementById("div3-btn"),
@@ -92,7 +99,6 @@ async function viewProblem(id){
     let p = await getProblemById(id);
     description_tab.style.display = "block";
     problems_box.style.display = "none";
-    
     let description_box = document.getElementById("description-box");
     let problem_title = document.getElementById("problem-title");
     problem_title.value = p.id + " : " + p.name;
@@ -105,11 +111,9 @@ let tabSwitch_debounce = false;
 async function loadProblems(divName) {
     tabSwitch_debounce = true;
     problems_box.innerHTML = "";
-    let problem_list = await loadProblemsByLevel(divName);
+    let problem_list = problem_cache[divName];
     let username = await getUsername();
     let solvedIds = await getSolvedProblemIds(username); 
-
-
     for (let problem of problem_list){
         let isSolved = solvedIds.includes(problem.id);
         let cardColor = isSolved?"#00aa5b":"#d8f0f8";
@@ -184,9 +188,9 @@ async function profileView() {
     username_field.value =  userData.name;
     rating_field.value = userData.points;
     let solvedIds = await getSolvedProblemIds(username);
+    let problem_list = await getProblemsByIds(solvedIds);
     solved_problems_box.innerHTML = "";
-    for (let id of solvedIds){
-        let problem = await getProblemById(id);
+    for (let problem of problem_list){
         let cardColor = "#00aa5b";
         let statusBadge = "SOLVED";
         solved_problems_box.innerHTML += `
@@ -231,6 +235,7 @@ back_btn.addEventListener("click",function(){
 });
 
 reload();
+//========
 for (let i of division_btns){
     i.addEventListener("click",function(){
         if (tabSwitch_debounce == true) return;
@@ -238,3 +243,11 @@ for (let i of division_btns){
         OnPress(i);
     });
 }
+tabSwitch_debounce = true;
+async function loadcached() {
+    for (let [key,value] of Object.entries(problem_cache)) {
+        problem_cache[key] = await loadProblemsByLevel(key);
+    }
+    tabSwitch_debounce = false;
+}
+loadcached();
