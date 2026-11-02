@@ -138,7 +138,7 @@ async function loadProblems(divName) {
     let solvedIds = await getSolvedProblemIds(username); 
     for (let problem of problem_list){
         let isSolved = solvedIds.includes(problem.id);
-        let defaultColor =(problem.division=="Special")?"#ffd700":"#d8f0f8";
+        let defaultColor ="#d8f0f8";
         let cardColor =isSolved?"#00aa5b":defaultColor;
         let statusBadge =isSolved?"SOLVED":"UNSOLVED";
         problems_box.innerHTML += `
