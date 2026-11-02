@@ -21,7 +21,7 @@ let username_field = document.getElementById("username-field");
 let rating_field = document.getElementById("rating-field");
 let solved_problems_box = document.getElementById("solved-problems-box");
 //======
-let is_mainpage = false;
+let current_page = "login";
 let currentID = -1;
 //======
 let pages = {
@@ -36,6 +36,7 @@ let problem_cache = {
     ["Division 2"]:[],
     ["Division 1"]:[],
     ["Division 0"]:[],
+    ["Special"]:[],
 }
 let division_btns = [
     document.getElementById("div4-btn"),
@@ -43,6 +44,7 @@ let division_btns = [
     document.getElementById("div2-btn"),
     document.getElementById("div1-btn"),
     document.getElementById("div0-btn"),
+    document.getElementById("special-btn"),
 ]
 //======
 async function init() {
@@ -52,34 +54,34 @@ async function init() {
             d.style.display ="none";
         }
         pages.login_page.style.display ="block";
-        is_mainpage = false;
+        current_page = "login";
     }
     else{
         for (let d of Object.values(pages)) {
             d.style.display ="none";
         }
         pages.main_page.style.display ="block";
-        is_mainpage = true;
+        current_page = "main";
     }
 }
 
 function reload(){
-    answer_field.value = "";
+    answer_field.value="";
     init();
 }
 async function submit() {
-    if (currentID == -1 || is_mainpage == false){
+    if (currentID == -1||current_page != "main"){
         alert("empty submission");
         return;
     }
-    let username = await getUsername();
-    let answer = document.getElementById("answer-field").value;
+    let username=await getUsername();
+    let answer=document.getElementById("answer-field").value;
     answer_field.value = "";
-    if (username == null || answer == null || answer.length == 0 ){
+    if (username == null ||answer == null ||answer.length == 0 ){
         alert("empty submission.");
         return;
     }
-    answer = answer.toLowerCase().replace(/\s+/g, '');
+    answer =answer.toLowerCase().replace(/\s+/g, '');
     if (answer.length >=200){
         alert("submission is too long.");
         return;
@@ -95,30 +97,54 @@ async function submit() {
     }
 }
 async function viewProblem(id){
+    if (current_page == "profile"){
+        if (profileSwitch_debounce ==true) return;
+        profileSwitch_debounce = true;
+        for (let d of Object.values(pages)) {
+            d.style.display ="none";
+        }
+        pages.main_page.style.display ="block";
+        current_page = "main";
+        profileSwitch_debounce = false;
+    }
+
     let p = await getProblemById(id);
     description_tab.style.display = "block";
     problems_box.style.display = "none";
     let description_box = document.getElementById("description-box");
     let problem_title = document.getElementById("problem-title");
-    problem_title.value = p.id + " : " + p.name;
-    description_box.textContent = p.description;
+    problem_title.value = p.id +" : "+p.name;
+    description_box.innerText = p.description;
+    if (window.renderMathInElement) {
+        renderMathInElement(description_box, {
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$',  right: '$',  display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+        });
+    }
     currentID = id;
 }
 
 let tabSwitch_debounce = false;
 async function loadProblems(divName) {
+    if (current_page!="main") return;
     problems_box.innerHTML = "";
-    let problem_list = problem_cache[divName];
+    let problem_list = problem_cache[divName] || [];
     let username = await getUsername();
     let solvedIds = await getSolvedProblemIds(username); 
     for (let problem of problem_list){
         let isSolved = solvedIds.includes(problem.id);
-        let cardColor = isSolved?"#00aa5b":"#d8f0f8";
-        let statusBadge = isSolved?"SOLVED":"UNSOLVED";
+        let defaultColor =(problem.division=="Special")?"#ffd700":"#d8f0f8";
+        let cardColor =isSolved?"#00aa5b":defaultColor;
+        let statusBadge =isSolved?"SOLVED":"UNSOLVED";
         problems_box.innerHTML += `
             <div class="problem-card" style="border: 2px solid ${cardColor};">
-                 <h5 style="color: ${cardColor};">#${problem.id}: ${problem.name} [${statusBadge}]</h5>
-                <p>${problem.base_points}PTS</p>
+                <h6 style="color: ${cardColor};">${problem.division} [${problem.base_points}PTS]</h6>
+                <h5 style="color: ${cardColor};">#${problem.id}: ${problem.name} [${statusBadge}]</h5>
                 <button onclick="viewProblem(${problem.id})">VIEW</button>
             </div>
             <br>
@@ -128,7 +154,8 @@ async function loadProblems(divName) {
 
 async function OnPress(something) {
     for (let i of division_btns){
-        i.style.color= "rgb(0, 0, 0)";
+        if (!i) continue;
+        i.style.color = "rgb(0, 0, 0)";
     }
     description_tab.style.display = "none";
     problems_box.style.display = "block";
@@ -169,7 +196,7 @@ signup_confirm.addEventListener("click",async function(){
         reload();
     }
 });
- let profileSwitch_debounce = false;
+let profileSwitch_debounce = false;
 async function profileView() {
     let username = await getUsername();
     if (username == null) return false;
@@ -185,8 +212,9 @@ async function profileView() {
         let statusBadge = "SOLVED";
         solved_problems_box.innerHTML += `
             <div class="problem-card" style="border: 2px solid ${cardColor};">
-                 <h5 style="color: ${cardColor};">#${problem.id}: ${problem.name} [${statusBadge}]</h5>
-                <p>${problem.base_points}PTS</p>
+                <h6 style="color: ${cardColor};">${problem.division} [${problem.base_points}PTS]</h6>
+                <h5 style="color: ${cardColor};">#${problem.id}: ${problem.name} [${statusBadge}]</h5>
+                <button onclick="viewProblem(${problem.id})">VIEW</button>
             </div>
             <br>
         `;
@@ -204,35 +232,38 @@ submit_btn.addEventListener("click",function(){
 
 viewprofile_btn.addEventListener("click",async function(){
     if (profileSwitch_debounce ==true) return;
+    if (current_page!="main") return;
     profileSwitch_debounce = true;
     for (let d of Object.values(pages)) {
         d.style.display ="none";
     }
     pages.profile_page.style.display ="block";
-    is_mainpage = false;
+    current_page = "profile";
     await profileView();
     profileSwitch_debounce = false;
 });
 
 back_btn.addEventListener("click",function(){
     if (profileSwitch_debounce ==true) return;
+    if (current_page!="profile") return;
     profileSwitch_debounce = true;
     for (let d of Object.values(pages)) {
         d.style.display ="none";
     }
     pages.main_page.style.display ="block";
-    is_mainpage = true;
+    current_page = "main";
     profileSwitch_debounce = false;
 });
 
 reload();
 //========
 for (let i of division_btns){
+    if (!i) continue;
     i.addEventListener("click",async function(){
-        if (tabSwitch_debounce == true) return;
-        tabSwitch_debounce = true;
+        if (tabSwitch_debounce==true) return;
+        tabSwitch_debounce=true;
         await OnPress(i);
-        tabSwitch_debounce = false;
+        tabSwitch_debounce=false;
     });
 }
 tabSwitch_debounce = true;

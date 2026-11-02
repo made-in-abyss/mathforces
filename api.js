@@ -5,7 +5,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 async function loadProblemsByLevel(levelName) {
     let { data, error } =await db
         .from('problems')
-        .select('id, name, description, base_points')
+        .select('id, name, description, base_points, division')
         .eq("division",levelName);
     if (error) {
         return [];
@@ -61,7 +61,7 @@ async function getProblemsByIds(idsArray) {
     if (!idsArray || idsArray.length === 0)return [];
     let {data,error} = await db
         .from('problems')
-        .select('id, name, base_points')
+        .select('id, name, base_points, division')
         .in('id',idsArray);
     if (error) return [];
     return data;

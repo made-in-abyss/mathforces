@@ -1,6 +1,12 @@
+<!DOCTYPE html>
+<html>
 <head>
     <meta charset="UTF-8">
     <title>MATHFORCES</title>
+    <!-- KaTeX for LaTeX Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <div id = "webtitle"><h1>&delta; MATHFORCES</h1></div><br>
@@ -30,6 +36,7 @@
             <button id = "div2-btn">Division 2</button>
             <button id = "div1-btn">Division 1</button>
             <button id = "div0-btn">Division 0</button>
+            <button id = "special-btn">Special</button>
         </div>
         <div id = "problems-box">
             
@@ -37,7 +44,7 @@
         <div id="description-tab">
             <input id = "problem-title" value = "The Next Oiler" disabled placeholder="Locked"></input>
             <br>
-            <textarea id = "description-box" disabled placeholder="Locked">We are the oilers</textarea>
+            <div id = "description-box">We are the oilers</div>
             <br>
             <input id = "answer-field"></input>
             <button id = "submit-btn">submit</button>
@@ -69,3 +76,4 @@
     <script src="api.js"></script>
     <script src="main.js"></script>
 </body>
+</html>
