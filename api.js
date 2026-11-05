@@ -54,7 +54,7 @@ async function getLeaderboard() {
         .from('players')
         .select('username, total_points,total_solved')
         .order('total_points', {ascending:false })
-        .limit(10);
+        .limit(100);
     return data || [];
 }
 async function getProblemsByIds(idsArray) {

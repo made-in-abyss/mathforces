@@ -12,23 +12,28 @@ let login_transition = document.getElementById("login-transition");
 //======
 let answer_field = document.getElementById("answer-field");
 let problems_box = document.getElementById("problems-box");
+let ranking_box = document.getElementById("ranking-box");
 let description_tab = document.getElementById("description-tab");
 let submit_btn = document.getElementById("submit-btn");
 //======
 let viewprofile_btn = document.getElementById("viewprofile-btn");
-let back_btn = document.getElementById("back-btn");
+let back_btn1 = document.getElementById("back-btn1");
+let back_btn2 = document.getElementById("back-btn2");
+let ranking_btn = document.getElementById("ranking-btn");
 let username_field = document.getElementById("username-field");
 let rating_field = document.getElementById("rating-field");
 let solved_problems_box = document.getElementById("solved-problems-box");
 //======
 let current_page = "login";
 let currentID = -1;
+let debounce = false;
 //======
 let pages = {
     login_page: document.getElementById("login-page"),
     signup_page:  document.getElementById("signup-page"),
     main_page: document.getElementById("main-page"),
     profile_page:  document.getElementById("profile-page"),
+    ranking_page:  document.getElementById("ranking-page"),
 }
 let problem_cache = {
     ["Division 4"]:[],
@@ -38,6 +43,7 @@ let problem_cache = {
     ["Division 0"]:[],
     ["Special"]:[],
 }
+let leaderboard = [];
 let division_btns = [
     document.getElementById("div4-btn"),
     document.getElementById("div3-btn"),
@@ -48,6 +54,7 @@ let division_btns = [
 ]
 //======
 async function init() {
+    debounce = true;
     let loggedIn=await checkStatus();
     if (loggedIn == false) {
         for (let d of Object.values(pages)) {
@@ -63,8 +70,8 @@ async function init() {
         pages.main_page.style.display ="block";
         current_page = "main";
     }
+    debounce = false;
 }
-
 function reload(){
     answer_field.value="";
     init();
@@ -98,16 +105,15 @@ async function submit() {
 }
 async function viewProblem(id){
     if (current_page == "profile"){
-        if (profileSwitch_debounce ==true) return;
-        profileSwitch_debounce = true;
+        if (debounce ==true) return;
+        debounce = true;
         for (let d of Object.values(pages)) {
             d.style.display ="none";
         }
         pages.main_page.style.display ="block";
         current_page = "main";
-        profileSwitch_debounce = false;
+        debounce = false;
     }
-
     let p = await getProblemById(id);
     description_tab.style.display = "block";
     problems_box.style.display = "none";
@@ -128,8 +134,6 @@ async function viewProblem(id){
     }
     currentID = id;
 }
-
-let tabSwitch_debounce = false;
 async function loadProblems(divName) {
     if (current_page!="main") return;
     problems_box.innerHTML = "";
@@ -196,13 +200,15 @@ signup_confirm.addEventListener("click",async function(){
         reload();
     }
 });
-let profileSwitch_debounce = false;
-async function profileView() {
-    let username = await getUsername();
+async function profileView(username) {
     if (username == null) return false;
     let userData = await getPlayerStats(username);
     if (userData == null) return false;
     username_field.value =  userData.name;
+    username_field.style.color = 
+    (userData.points>=200)? ((userData.points>=600)? "#2104da" :
+    "#00aa5b"): 
+    "#000604";
     rating_field.value = userData.points;
     let solvedIds = await getSolvedProblemIds(username);
     let problem_list = await getProblemsByIds(solvedIds);
@@ -221,6 +227,31 @@ async function profileView() {
     }
 }
 
+async function wrapper(username){
+    if (debounce ==true) return;
+    if (current_page!="main" && current_page!="ranking") return;
+    debounce = true;
+    for (let d of Object.values(pages)) {
+        d.style.display ="none";
+    }
+    await profileView(username);
+    pages.profile_page.style.display ="block";
+    current_page = "profile";
+    debounce = false;
+}
+
+async function loadLeaderBoard(params) {
+    ranking_box.innerHTML = ""
+    for (let user of leaderboard){
+        let cardColor = "#e6f44f";
+        ranking_box.innerHTML += `
+            </h6><button id = "user-card" onclick="wrapper('${user.username}')" style="background-color: ${cardColor};">${user.username} [${user.total_points}PTS]</button>
+            <br>
+        `;
+    }
+}
+
+
 logout_confirm.addEventListener("click",async function(){
     await logOut();
     reload();
@@ -231,46 +262,72 @@ submit_btn.addEventListener("click",function(){
 });
 
 viewprofile_btn.addEventListener("click",async function(){
-    if (profileSwitch_debounce ==true) return;
+    if (debounce ==true) return;
     if (current_page!="main") return;
-    profileSwitch_debounce = true;
+    debounce = true;
     for (let d of Object.values(pages)) {
         d.style.display ="none";
     }
+    let username = await getUsername();
+    await profileView(username);
     pages.profile_page.style.display ="block";
     current_page = "profile";
-    await profileView();
-    profileSwitch_debounce = false;
+    debounce = false;
 });
 
-back_btn.addEventListener("click",function(){
-    if (profileSwitch_debounce ==true) return;
-    if (current_page!="profile") return;
-    profileSwitch_debounce = true;
+ranking_btn.addEventListener("click",async function(){
+    if (debounce ==true) return;
+    if (current_page!="main") return;
+    debounce = true;
+    for (let d of Object.values(pages)) {
+        d.style.display ="none";
+    }
+    await loadLeaderBoard();
+    pages.ranking_page.style.display ="block";
+    current_page = "ranking";
+    debounce = false;
+});
+
+
+back_btn1.addEventListener("click",function(){
+    if (debounce ==true) return;
+    if (current_page!="profile" && current_page!="ranking") return;
+    debounce = true;
     for (let d of Object.values(pages)) {
         d.style.display ="none";
     }
     pages.main_page.style.display ="block";
     current_page = "main";
-    profileSwitch_debounce = false;
+    debounce = false;
 });
-
-reload();
+back_btn2.addEventListener("click",function(){
+    if (debounce ==true) return;
+    if (current_page!="profile" && current_page!="ranking") return;
+    debounce = true;
+    for (let d of Object.values(pages)) {
+        d.style.display ="none";
+    }
+    pages.main_page.style.display ="block";
+    current_page = "main";
+    debounce = false;
+});
 //========
 for (let i of division_btns){
     if (!i) continue;
     i.addEventListener("click",async function(){
-        if (tabSwitch_debounce==true) return;
-        tabSwitch_debounce=true;
+        if (debounce==true) return;
+        debounce=true;
         await OnPress(i);
-        tabSwitch_debounce=false;
+        debounce=false;
     });
 }
-tabSwitch_debounce = true;
 async function loadcached() {
+    debounce = true;
     for (let [key,value] of Object.entries(problem_cache)) {
         problem_cache[key] = await loadProblemsByLevel(key);
     }
-    tabSwitch_debounce = false;
+    leaderboard = await getLeaderboard();
+    debounce = false;
 }
 loadcached();
+reload();
